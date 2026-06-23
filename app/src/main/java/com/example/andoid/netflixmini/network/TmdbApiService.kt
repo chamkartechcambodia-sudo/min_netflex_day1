@@ -1,4 +1,5 @@
 package com.example.andoid.netflixmini.network
+import retrofit2.http.Path
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -27,6 +28,14 @@ interface TmdbApiService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): MovieResponse
+
+    // Sprint 6 — used by DetailFragment to find the YouTube trailer for one movie.
+    @GET("movie/{movie_id}/videos")
+    suspend fun getMovieVideos(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): VideoResponse
 }
 
 // A single shared instance of the service (created the first time it is used).
