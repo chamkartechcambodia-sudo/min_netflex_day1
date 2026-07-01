@@ -36,6 +36,28 @@ interface TmdbApiService {
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US"
     ): VideoResponse
+
+    @GET("movie/top_rated")
+    suspend fun getTopRated(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): MovieResponse
+
+    @GET("movie/now_playing")
+    suspend fun getNowPlaying(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): MovieResponse
+
+    @GET("movie/upcoming")
+    suspend fun getUpcoming(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): MovieResponse
+
 }
 
 // A single shared instance of the service (created the first time it is used).

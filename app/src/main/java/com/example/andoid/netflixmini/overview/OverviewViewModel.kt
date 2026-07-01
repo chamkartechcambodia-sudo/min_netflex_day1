@@ -5,9 +5,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.Glide.init
 import com.example.andoid.netflixmini.BuildConfig
 import com.example.andoid.netflixmini.network.Movie
 import com.example.andoid.netflixmini.network.TmdbApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.collections.take
 
@@ -25,6 +28,59 @@ class OverviewViewModel : ViewModel() {
     private val _movies = MutableLiveData<List<Movie>>()
     val movies: LiveData<List<Movie>> get() = _movies
 
+    private val _popularMovies = MutableLiveData<List<Movie>>()
+    val popularMovies: LiveData<List<Movie>> get() = _popularMovies
+
+    private val _topRatedMovies = MutableLiveData<List<Movie>>()
+    val topRatedMovies: LiveData<List<Movie>> get() = _topRatedMovies
+
+    private val _nowPlayingMovies = MutableLiveData<List<Movie>>()
+    val nowPlayingMovies: LiveData<List<Movie>> get() = _nowPlayingMovies
+
+    private val _upcomingMovies = MutableLiveData<List<Movie>>()
+    val upcomingMovies: LiveData<List<Movie>> get() = _upcomingMovies
+
+    private val _featured = MutableLiveData<Movie>()
+    val featured: LiveData<Movie> get() = _featured
+
+
+    private fun loadHome(){
+        viewModelScope.launch {
+            _status.value = TmdbApiStatus.LOADING
+            try {
+                val key = BuildConfig.TMDB_API_KEY
+
+                coroutineScope {
+                    val popularDeferred = async { TmdbApi.retrofitService.getPopular(key) }
+                    val topRatedDeferred = async { TmdbApi.retrofitService.getTopRated(key) }
+                    val nowPlayingDeferred = async { TmdbApi.retrofitService.getNowPlaying(key) }
+                    val upcomingDeferred = async { TmdbApi.retrofitService.getUpcoming(key) }
+
+                    val popular = popularDeferred.await().results
+                    val topRated = topRatedDeferred.await().results
+                    val nowPlaying = nowPlayingDeferred.await().results
+                    val upcoming = upcomingDeferred.await().results
+
+                    _popularMovies.value = popular
+                    _topRatedMovies.value = topRated
+                    _nowPlayingMovies.value = nowPlaying
+                    _upcomingMovies.value = upcoming
+                    _featured.value = popular.firstOrNull()
+                }
+
+                _status.value = TmdbApiStatus.DONE
+
+            } catch (e: Exception) {
+                _popularMovies.value = listOf()
+                _topRatedMovies.value = listOf()
+                _nowPlayingMovies.value = listOf()
+                _upcomingMovies.value = listOf()
+                _status.value = TmdbApiStatus.ERROR
+            }
+        }
+    }
+
+
     // A friendly message shown while loading or on error (empty when DONE).
     val statusMessage: LiveData<String> = status.map { state ->
         when (state) {
@@ -41,10 +97,10 @@ class OverviewViewModel : ViewModel() {
 
     // Fetch immediately when the ViewModel is created.
     init {
-        getPopularMovies()
+        loadHome()
     }
 
-    private fun getPopularMovies() {
+   /* private fun getPopularMovies() {
         viewModelScope.launch {
             _status.value = TmdbApiStatus.LOADING
             try {
@@ -56,5 +112,5 @@ class OverviewViewModel : ViewModel() {
                 _status.value = TmdbApiStatus.ERROR
             }
         }
-    }
+    }*/
 }
